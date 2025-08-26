@@ -15,98 +15,51 @@ import joblib
 import os
 
 class AdvancedAnomalyDetector:
-    """Advanced anomaly detection with multiple algorithms"""
-    
+    """
+    Rule-based anomaly detection based on feature deviation from baseline.
+    This version does not use TensorFlow or complex scikit-learn models.
+    """
+
     def __init__(self, contamination: float = 0.1):
-        self.contamination = contamination
-        self.models = {}
-        self.scalers = {}
+        self.contamination = contamination # Not directly used in this rule-based model, but kept for compatibility
+        self.scaler = StandardScaler()
+        self.baseline_mean = None
+        self.baseline_std = None
         self.feature_names = []
-        self.ensemble_weights = {}
-        
+
     def fit(self, X: np.ndarray, feature_names: List[str]):
-        """Train ensemble of anomaly detection models"""
+        """Calculate baseline mean and standard deviation from training data."""
         self.feature_names = feature_names
         
-        # Scale features
-        self.scalers['standard'] = StandardScaler()
-        X_scaled = self.scalers['standard'].fit_transform(X)
+        X_scaled = self.scaler.fit_transform(X)
         
-        # Train multiple models
-        self.models['isolation_forest'] = IsolationForest(
-            contamination=self.contamination,
-            random_state=42,
-            n_estimators=100
-        )
-        self.models['isolation_forest'].fit(X_scaled)
+        self.baseline_mean = np.mean(X_scaled, axis=0)
+        self.baseline_std = np.std(X_scaled, axis=0)
         
-        self.models['one_class_svm'] = OneClassSVM(
-            nu=self.contamination,
-            kernel='rbf',
-            gamma='scale'
-        )
-        self.models['one_class_svm'].fit(X_scaled)
-        
-        # DBSCAN for density-based clustering
-        self.models['dbscan'] = DBSCAN(eps=0.5, min_samples=2)
-        cluster_labels = self.models['dbscan'].fit_predict(X_scaled)
-        
-        # Calculate ensemble weights based on performance
-        self._calculate_ensemble_weights(X_scaled)
+        # Avoid division by zero for std dev
+        self.baseline_std[self.baseline_std == 0] = 1e-8 
         
         return self
-    
+
     def predict(self, X: np.ndarray) -> Tuple[List[bool], List[float]]:
-        """Predict anomalies using ensemble approach"""
-        X_scaled = self.scalers['standard'].transform(X)
+        """Predict anomalies based on deviation from baseline."""
+        X_scaled = self.scaler.transform(X)
         
-        predictions = {}
-        scores = {}
+        # Calculate Z-scores for each feature
+        z_scores = np.abs((X_scaled - self.baseline_mean) / self.baseline_std)
         
-        # Isolation Forest
-        if_pred = self.models['isolation_forest'].predict(X_scaled)
-        if_score = self.models['isolation_forest'].decision_function(X_scaled)
-        predictions['isolation_forest'] = if_pred == -1
-        scores['isolation_forest'] = np.abs(if_score)
+        # Combine Z-scores into a single risk score (e.g., max Z-score)
+        risk_scores = np.max(z_scores, axis=1)
         
-        # One-Class SVM
-        svm_pred = self.models['one_class_svm'].predict(X_scaled)
-        svm_score = self.models['one_class_svm'].decision_function(X_scaled)
-        predictions['one_class_svm'] = svm_pred == -1
-        scores['one_class_svm'] = np.abs(svm_score)
+        # Normalize risk_scores to confidence (0-1)
+        # Higher risk_score means higher confidence in anomaly
+        # Using a simple sigmoid-like function or capping
+        confidence = 1 / (1 + np.exp(-risk_scores + 3)) # Increased 2 to 3 for less aggressive confidence
         
-        # DBSCAN (outliers have label -1)
-        dbscan_pred = self.models['dbscan'].fit_predict(X_scaled)
-        predictions['dbscan'] = dbscan_pred == -1
-        scores['dbscan'] = np.ones(len(X_scaled))  # Simplified score
+        # Determine anomaly based on a threshold (e.g., max Z-score > 2.0)
+        is_anomaly = risk_scores > 3.0 # Increased 2.0 to 3.0 for less sensitive anomaly detection
         
-        # Ensemble prediction
-        ensemble_pred = []
-        ensemble_scores = []
-        
-        for i in range(len(X_scaled)):
-            weighted_score = 0
-            anomaly_votes = 0
-            
-            for model_name in predictions:
-                weight = self.ensemble_weights.get(model_name, 1.0)
-                if predictions[model_name][i]:
-                    anomaly_votes += weight
-                weighted_score += scores[model_name][i] * weight
-            
-            ensemble_pred.append(anomaly_votes > sum(self.ensemble_weights.values()) / 2)
-            ensemble_scores.append(weighted_score / sum(self.ensemble_weights.values()))
-        
-        return ensemble_pred, ensemble_scores
-    
-    def _calculate_ensemble_weights(self, X: np.ndarray):
-        """Calculate weights for ensemble based on model performance"""
-        # Simple equal weighting for now
-        self.ensemble_weights = {
-            'isolation_forest': 0.4,
-            'one_class_svm': 0.4,
-            'dbscan': 0.2
-        }
+        return is_anomaly.tolist(), confidence.tolist()
 
 class UserBehaviorClassifier:
     """Multi-user classifier for user identification"""

@@ -1,3 +1,5 @@
+
+from pyexpat import features
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,6 +19,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Optional
 import warnings
+from advanced_models import AdvancedAnomalyDetector
 warnings.filterwarnings('ignore')
 
 class KeystrokeAgent:
@@ -120,19 +123,27 @@ class KeystrokeAgent:
         # Basic timing features - Fixed WPM calculation
         total_time = self.key_events[-1]['timestamp'] - self.key_events[0]['timestamp']
         
-        # Calculate WPM properly: either word count or character count / 5
+        # Calculate WPM properly based on correct characters (Net WPM)
         word_count = len(text.split())
-        char_count = len(text.strip())
         
-        # Standard WPM calculation (characters / 5 / minutes) or (words / minutes)
+        # Calculate Levenshtein distance for a more robust accuracy score
+        distance = self._calculate_levenshtein_distance(text.strip(), reference_text)
+        accuracy = (1 - (distance / len(reference_text))) * 100 if len(reference_text) > 0 else 100.0
+        accuracy = max(0, accuracy) # Ensure accuracy isn't negative
+
+        # Base WPM on the number of non-error characters
+        # len(reference_text) - distance is a good approximation of correct characters
+        correct_chars = len(reference_text) - distance
+
+        # Standard WPM calculation (characters / 5 / minutes)
         minutes_elapsed = total_time / 60 if total_time > 0 else 0.01  # Avoid division by zero
         
         # Ensure reasonable time bounds (minimum 1 second for calculation)
         if total_time < 1.0:
             minutes_elapsed = 1.0 / 60  # Use 1 second minimum
             
-        wpm_by_chars = (char_count / 5) / minutes_elapsed if minutes_elapsed > 0 else 0
-        wpm_by_words = word_count / minutes_elapsed if minutes_elapsed > 0 else 0
+        wpm_by_chars = (correct_chars / 5) / minutes_elapsed if minutes_elapsed > 0 else 0
+        wpm_by_words = word_count / minutes_elapsed if minutes_elapsed > 0 else 0 # This is gross WPM by words
         
         # Use the character-based method as it's more standard, but cap at reasonable values
         wpm = min(wpm_by_chars, 200)  # Cap at 200 WPM to avoid unrealistic values
@@ -141,9 +152,9 @@ class KeystrokeAgent:
         flight_times = [event['flight_time'] for event in self.key_events[1:]]
         avg_flight_time = np.mean(flight_times) if flight_times else 0
         std_flight_time = np.std(flight_times) if flight_times else 0
-        
-        # Accuracy calculation
-        accuracy = self._calculate_accuracy(text, reference_text)
+
+        # char_count is still useful for other metrics
+        char_count = len(text.strip())
         
         # Enhanced metrics
         import statistics
@@ -175,7 +186,10 @@ class KeystrokeAgent:
             'typed_chars': self.typed_chars,
             'error_rate': (self.error_count / max(self.typed_chars, 1)) * 100,
             'hold_time_variance': np.var(self.hold_times) if self.hold_times else 0,
-            'gap_time_variance': np.var(self.gap_times) if self.gap_times else 0
+            'gap_time_variance': np.var(self.gap_times) if self.gap_times else 0,
+            'typed_text': text,
+            'reference_text': reference_text,
+            'key_events': self.key_events
         }
         
         # Store enhanced features for potential saving
@@ -202,9 +216,25 @@ class KeystrokeAgent:
                           if i < len(reference_text) and char == reference_text[i])
         return (correct_chars / len(reference_text)) * 100
     
-    def _count_corrections(self, typed_text: str, reference_text: str) -> int:
-        """Estimate number of corrections made"""
-        return max(0, len(typed_text) - len(reference_text))
+    def _calculate_levenshtein_distance(self, s1: str, s2: str) -> int:
+        """Calculate the Levenshtein distance between two strings."""
+        if len(s1) < len(s2):
+            return self._calculate_levenshtein_distance(s2, s1)
+
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+        
+        return previous_row[-1]
         
     def save_data_to_csv(self, user_id: str, filepath: str = "typing_behavior_data.csv"):
         """Save enhanced features to CSV file"""
@@ -298,6 +328,7 @@ class BehaviorModelAgent:
         self.user_models = {}
         self.user_profiles = {}
         self.scaler = StandardScaler()
+        self.model = AdvancedAnomalyDetector()
         
     def create_user_profile(self, user_id: str, features: Dict):
         """Create initial user profile from baseline features"""
@@ -316,50 +347,107 @@ class BehaviorModelAgent:
             'session_type': 'baseline'
         })
         
-    def train_user_model(self, user_id: str, min_samples: int = 3):
-        """Train anomaly detection model for specific user"""
+    def train_user_model(self, user_id: str, min_samples: int = 2):
+        """Train anomaly detection model for specific user with sentence chunking"""
+        print(f"Starting training for user {user_id} with min_samples={min_samples}")
         if user_id not in self.user_profiles:
             print(f"User {user_id} not found in profiles")
             return False
-            
+
         baseline_features = self.user_profiles[user_id]['baseline_features']
+        print(f"Found {len(baseline_features)} baseline features.")
         if len(baseline_features) < min_samples:
             print(f"Insufficient baseline samples: {len(baseline_features)} < {min_samples}")
             return False
-            
-        # Prepare feature matrix
+
         feature_names = ['wpm', 'avg_flight_time', 'std_flight_time', 'accuracy', 
-                        'typing_rhythm_variance', 'max_flight_time', 'min_flight_time']
-        
+                         'typing_rhythm_variance', 'max_flight_time', 'min_flight_time']
+
         X = []
-        for features in baseline_features:
-            row = [features.get(name, 0) for name in feature_names]
-            X.append(row)
-            
+
+        for i, features in enumerate(baseline_features):
+            print(f"Processing baseline feature #{i+1}")
+            typed_text = features.get("typed_text", "")
+            reference_text = features.get("reference_text", "")
+
+            if typed_text and reference_text:
+                # --- Split into chunks of 15–20 characters for richer data ---
+                chunk_size = 20
+                for j in range(0, len(reference_text), chunk_size):
+                    ref_chunk = reference_text[j:j+chunk_size]
+                    typed_chunk = typed_text[j:j+chunk_size]
+
+                    if len(ref_chunk) < 5:  # skip tiny leftovers
+                        continue
+
+                    # Recompute features on the chunk
+                    all_key_events = features.get("key_events", [])
+                    chunk_key_events = all_key_events[j:j+chunk_size]
+                    if not chunk_key_events:
+                        print(f"Warning: No key events for chunk {j} in baseline {i+1}")
+                        continue
+
+                    chunk_features = self._extract_chunk_features(typed_chunk, ref_chunk, chunk_key_events)
+
+                    row = [chunk_features.get(name, 0) for name in feature_names]
+                    X.append(row)
+            else:
+                # Fallback: use the full sentence feature set
+                print(f"Fallback for baseline feature #{i+1}")
+                row = [features.get(name, 0) for name in feature_names]
+                X.append(row)
+
+        print(f"Created {len(X)} chunked samples.")
         X = np.array(X)
-        
+
+        if X.shape[0] < min_samples:
+            print(f"Not enough chunked samples for training: {X.shape[0]} < {min_samples}")
+            return False
+
         # Train anomaly detection model
-        model = IsolationForest(contamination=0.1, random_state=42)
-        model.fit(X)
-        
+        print("Training AdvancedAnomalyDetector model...")
+        self.model.fit(X, feature_names)
+
         self.user_models[user_id] = {
-            'model': model,
-            'scaler': StandardScaler().fit(X),
+            'model': self.model,
             'feature_names': feature_names,
-            'baseline_stats': {
-                'mean': np.mean(X, axis=0),
-                'std': np.std(X, axis=0)
-            }
         }
-        
+
         # Mark model as trained
         self.user_profiles[user_id]['model_trained'] = True
-        
-        # Save model to disk
         self._save_model(user_id)
-        
-        print(f"Model trained and saved successfully for user {user_id}")
+
+        print(f"[SUCCESS] Model trained successfully with {X.shape[0]} chunked samples for {user_id}")
         return True
+
+
+    def _extract_chunk_features(self, typed: str, reference: str, key_events: List[Dict]) -> dict:
+        """Extract simple features from a text chunk"""
+        if not typed or not key_events:
+            return { 'wpm':0, 'avg_flight_time':0, 'std_flight_time':0,
+                     'accuracy':0, 'typing_rhythm_variance':0,
+                     'max_flight_time':0, 'min_flight_time':0 }
+
+        # Accuracy
+        correct_chars = sum(1 for i, c in enumerate(typed) if i < len(reference) and c == reference[i])
+        accuracy = (correct_chars / len(reference)) * 100 if reference else 0
+
+        # Timing features from key events
+        flight_times = [event['flight_time'] for event in key_events if event['flight_time'] > 0]
+        total_time = key_events[-1]['timestamp'] - key_events[0]['timestamp']
+        minutes_elapsed = total_time / 60 if total_time > 0 else 0.01
+        wpm = (len(typed) / 5) / minutes_elapsed if minutes_elapsed > 0 else 0
+
+        return {
+            'wpm': wpm,
+            'avg_flight_time': np.mean(flight_times) if flight_times else 0,
+            'std_flight_time': np.std(flight_times) if flight_times else 0,
+            'accuracy': accuracy,
+            'typing_rhythm_variance': np.var(flight_times) if flight_times else 0,
+            'max_flight_time': max(flight_times) if flight_times else 0,
+            'min_flight_time': min(flight_times) if flight_times else 0
+        }
+
     
     def _save_model(self, user_id: str):
         """Save trained model to disk"""
@@ -372,7 +460,7 @@ class BehaviorModelAgent:
             
             # Save the entire model data
             if user_id in self.user_models:
-                joblib.dump(self.user_models[user_id], model_path)
+                joblib.dump(self.user_models[user_id]['model'], model_path)
                 print(f"Model saved to: {model_path}")
                 return True
             else:
@@ -389,7 +477,7 @@ class BehaviorModelAgent:
             model_path = f"data/models/{user_id}_model.pkl"
             
             if os.path.exists(model_path):
-                self.user_models[user_id] = joblib.load(model_path)
+                self.user_models[user_id] = {'model': joblib.load(model_path)}
                 print(f"Model loaded from: {model_path}")
                 return True
             else:
@@ -409,26 +497,26 @@ class BehaviorModelAgent:
                 return False, 0.0
             
         model_data = self.user_models[user_id]
-        feature_vector = [features.get(name, 0) for name in model_data['feature_names']]
+        model = model_data['model']
+
+        # Check if the loaded model is the dummy model or an old model
+        if not hasattr(model, 'feature_names'):
+            print("WARNING: Loaded model is incompatible or a dummy model. Returning default values.")
+            return False, 0.0
+
+        feature_vector = [features.get(name, 0) for name in model.feature_names]
         feature_vector = np.array(feature_vector).reshape(1, -1)
         
-        # Scale features
-        feature_vector = model_data['scaler'].transform(feature_vector)
-        
         # Predict anomaly
-        prediction = model_data['model'].predict(feature_vector)[0]
-        anomaly_score = model_data['model'].decision_function(feature_vector)[0]
+        is_anomaly, confidence = model.predict(feature_vector)
         
-        is_anomaly = prediction == -1
-        confidence = abs(anomaly_score)
-        
-        return is_anomaly, confidence
+        return is_anomaly[0], confidence[0]
 
 class FraudDetectionAgent:
     """Agent responsible for fraud detection and alerting"""
     
     def __init__(self):
-        self.fraud_threshold = 0.3
+        self.fraud_threshold = 0.6
         self.alert_history = []
         
     def analyze_session(self, user_id: str, features: Dict, is_anomaly: bool, 
@@ -737,26 +825,26 @@ def show_registration_page():
         # Progress tracker - MonkeyType style
         st.markdown(f"""
         <div class="session-progress">
-            <h3>Progress: Session {baseline_count + 1 if baseline_count < 3 else 3} of 3</h3>
+            <h3>Progress: Session {baseline_count + 1 if baseline_count < 4 else 4} of 4</h3>
             <div style="display: flex; justify-content: space-between; margin-top: 10px;">
                 <span style="color: {'#4CAF50' if baseline_count >= 1 else '#ccc'};">●</span>
                 <span style="color: {'#4CAF50' if baseline_count >= 2 else '#ccc'};">●</span>
                 <span style="color: {'#4CAF50' if baseline_count >= 3 else '#ccc'};">●</span>
-            </div>
+                <span style="color: {'#4CAF50' if baseline_count >= 4 else '#ccc'};">●</span>
+                          </div>
         </div>
         """, unsafe_allow_html=True)
         
         # Reference texts for different sessions
         reference_texts = [
-            "The quick brown fox jumps over the lazy dog.",
-            "Pack my box with five dozen liquor jugs and thirty quart jugs.",
-            "How vexingly quick daft zebras jump over the lazy dog.",
-            "Waltz, bad nymph, for quick jigs vex Bud and Jim.",
-            "Sphinx of black quartz, judge my vow and hex."
+    "Artificial intelligence enables machines to learn patterns from data, adapt intelligently, and perform tasks once thought to require human cognition.",
+    "The history of computing is marked by rapid innovation, from early mechanical calculators to modern deep learning systems that power today’s applications.",
+    "The quick brown fox jumps over the lazy dog.",
+    "Never underestimate the power of a good book."
         ]
         
         # Select text based on session number
-        if baseline_count < 3:
+        if baseline_count < 4:
             selected_text = reference_texts[baseline_count % len(reference_texts)]
             
             # MonkeyType-style typing interface
@@ -782,6 +870,7 @@ def show_registration_page():
                         st.session_state.typing_started = True
                         keystroke_agent.reset_session()
                         keystroke_agent.start_capture()
+                        st.session_state.typing_session_start_time = keystroke_agent.start_time
                         st.rerun()
                 
                 if st.session_state.typing_started:
@@ -795,29 +884,19 @@ def show_registration_page():
                     )
                     
                     # Process typing in real-time
-                    if typed_text:
-                        # Process keystrokes with realistic timing
-                        keystroke_agent.reset_session()
-                        keystroke_agent.start_capture()
-                        
-                        base_time = time.time()
-                        for i, char in enumerate(typed_text):
-                            char_time = base_time + i * random.uniform(0.2, 0.5)
-                            keystroke_agent.process_keystroke(char, char_time)
-                            release_time = char_time + random.uniform(0.05, 0.1)
-                            keystroke_agent.process_key_release(char, release_time)
-                        
-                        # Calculate accuracy
-                        accuracy = 0
-                        correct_chars = 0
-                        for i, char in enumerate(typed_text):
-                            if i < len(selected_text) and char == selected_text[i]:
-                                correct_chars += 1
-                        if len(typed_text) > 0:
-                            accuracy = (correct_chars / len(typed_text)) * 100
-                        
-                        # Store current text for comparison
-                        st.session_state.current_text = typed_text
+                    # The simulation is now done only once at the end of the session.
+
+                    # Calculate accuracy
+                    accuracy = 0
+                    correct_chars = 0
+                    for i, char in enumerate(typed_text):
+                        if i < len(selected_text) and char == selected_text[i]:
+                            correct_chars += 1
+                    if len(typed_text) > 0:
+                        accuracy = (correct_chars / len(typed_text)) * 100
+                    
+                    # Store current text for comparison
+                    st.session_state.current_text = typed_text
             
             with col2:
                 # MonkeyType-style metrics display
@@ -864,6 +943,23 @@ def show_registration_page():
                     if len(typed_text) >= len(selected_text) * 0.9:  # 90% completion
                         st.session_state.typing_complete = True
                         
+                        # Run the simulation once, now that typing is complete
+                        start_time_from_session = st.session_state.get('typing_session_start_time')
+                        if start_time_from_session:
+                            # Manually clear events before running simulation
+                            keystroke_agent.key_events = []
+                            keystroke_agent.hold_times = []
+                            keystroke_agent.gap_times = []
+                            keystroke_agent.flight_times = []
+                            keystroke_agent.typed_chars = 0
+
+                            char_time = start_time_from_session
+                            for char in typed_text:
+                                char_time += random.uniform(0.1, 0.3)
+                                keystroke_agent.process_keystroke(char, char_time)
+                                release_time = char_time + random.uniform(0.05, 0.1)
+                                keystroke_agent.process_key_release(char, release_time)
+
                         # Extract features for saving
                         features = keystroke_agent.extract_features(typed_text, selected_text)
                         
@@ -871,8 +967,8 @@ def show_registration_page():
                         st.markdown(f"""
                         <div style="background:#4CAF50; color:white; padding:1rem; border-radius:10px; text-align:center; margin:1rem 0;">
                             <h3>🎉 Session Complete!</h3>
-                            <p>Final WPM: <strong>{real_time_metrics.get('speed_wpm', 0):.1f}</strong> | 
-                               Accuracy: <strong>{accuracy:.1f}%</strong></p>
+                            <p>Final WPM: <strong>{features.get('wpm', 0):.1f}</strong> | 
+                               Accuracy: <strong>{features.get('accuracy', 0):.1f}%</strong></p>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -914,7 +1010,7 @@ def show_registration_page():
                             # Next session or model training
                             current_baseline_count = len(behavior_agent.user_profiles.get(user_id, {}).get('baseline_features', []))
                             
-                            if current_baseline_count + 1 >= 3:  # After saving this will be 3
+                            if current_baseline_count + 1 >= 5:  # After saving this will be 5
                                 if st.button("🤖 Complete Registration", type="secondary", use_container_width=True):
                                     st.info("👆 Save this session first, then train your model!")
                             else:
@@ -933,7 +1029,7 @@ def show_registration_page():
                         st.rerun()
         
         # Model training section (after 3 sessions)
-        if baseline_count >= 3:
+        if baseline_count >= 2:
             st.markdown("---")
             st.markdown("## 🤖 Complete Your Registration")
             
@@ -1011,7 +1107,7 @@ def show_verification_page():
     baseline_count = len(user_data.get('baseline_features', []))
     
     if not model_trained:
-        if baseline_count >= 3:
+        if baseline_count >= 2:
             st.warning("⚠️ User has enough baseline data but model not trained yet.")
             if st.button("🤖 Train Model Now"):
                 success = behavior_agent.train_user_model(selected_user)
@@ -1052,7 +1148,9 @@ def show_verification_page():
             
         if st.button("Start Verification"):
             st.session_state.verification_active = True
+            keystroke_agent.reset_session()
             keystroke_agent.start_capture()
+            st.session_state.typing_session_start_time = keystroke_agent.start_time
             
         if st.session_state.verification_active:
             typed_text = st.text_area(
@@ -1061,137 +1159,87 @@ def show_verification_page():
                 placeholder="Start typing the verification text..."
             )
             
-            if typed_text:
-                # Process enhanced keystroke data with realistic timing
-                keystroke_agent.reset_session()
-                keystroke_agent.start_capture()
-                
-                # Simulate realistic typing timing
-                base_time = time.time()
-                for i, char in enumerate(typed_text):
-                    # Realistic keystroke timing (200-500ms between keys for more realistic WPM)
-                    char_time = base_time + i * random.uniform(0.2, 0.5)
-                    keystroke_agent.process_keystroke(char, char_time)
-                    # Key release after 50-100ms
-                    release_time = char_time + random.uniform(0.05, 0.1)
-                    keystroke_agent.process_key_release(char, release_time)
-                
-                # Get real-time metrics
-                real_time_metrics = keystroke_agent.get_real_time_metrics()
-                features = keystroke_agent.extract_features(typed_text, verification_text)
-                
-                # Enhanced real-time metrics
-                with col2:
-                    st.markdown("### Live Verification Metrics")
-                    if real_time_metrics:
-                        col2_1, col2_2 = st.columns(2)
-                        with col2_1:
-                            st.metric("WPM", f"{real_time_metrics.get('speed_wpm', 0):.1f}")
-                            st.metric("Accuracy", f"{features.get('accuracy', 0):.1f}%" if features else "0%")
-                            st.metric("Hold Time", f"{real_time_metrics.get('avg_hold', 0):.3f}s")
-                            
-                        with col2_2:
-                            st.metric("Flight Time", f"{real_time_metrics.get('avg_flight', 0):.3f}s")
-                            st.metric("Errors", real_time_metrics.get('errors', 0))
-                            st.metric("Rhythm", f"{real_time_metrics.get('rhythm_stddev', 0):.3f}s")
-                        
-                        # Real-time risk assessment
-                        if features:
-                            risk_score = 0
-                            risk_indicators = []
-                            
-                            # Speed check
-                            wpm = features.get('wpm', 0)
-                            if wpm > 120:
-                                risk_score += 0.3
-                                risk_indicators.append("High speed")
-                            elif wpm < 10:
-                                risk_score += 0.3
-                                risk_indicators.append("Low speed")
-                            
-                            # Accuracy check
-                            accuracy = features.get('accuracy', 100)
-                            if accuracy < 80:
-                                risk_score += 0.2
-                                risk_indicators.append("Low accuracy")
-                            
-                            # Error rate check
-                            error_rate = real_time_metrics.get('error_rate', 0)
-                            if error_rate > 15:
-                                risk_score += 0.2
-                                risk_indicators.append("High error rate")
-                            
-                            # Display risk level
-                            if risk_score > 0.5:
-                                st.error(f"🚨 High Risk: {risk_score:.2f}")
-                            elif risk_score > 0.3:
-                                st.warning(f"⚠️ Medium Risk: {risk_score:.2f}")
-                            else:
-                                st.success(f"✅ Low Risk: {risk_score:.2f}")
-                            
-                            if risk_indicators:
-                                st.markdown("**Risk Factors:**")
-                                for indicator in risk_indicators:
-                                    st.markdown(f"- {indicator}")
-                
-                # Complete verification
-                if len(typed_text) >= len(verification_text) * 0.9:
-                    if st.button("Complete Verification"):
-                        # Predict anomaly
-                        is_anomaly, confidence = behavior_agent.predict_anomaly(selected_user, features)
-                        
-                        # Fraud analysis
-                        fraud_analysis = fraud_agent.analyze_session(
-                            selected_user, features, is_anomaly, confidence
-                        )
-                        
-                        # Display results
-                        st.markdown("### 🔍 Verification Results")
-                        
-                        if fraud_analysis['fraud_detected']:
-                            st.markdown("""
-                            <div class="alert-danger">
-                                <h4>⚠️ FRAUD DETECTED</h4>
-                                <p>The typing pattern does not match the registered user.</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.markdown("""
-                            <div class="alert-success">
-                                <h4>✅ VERIFICATION SUCCESSFUL</h4>
-                                <p>Typing pattern matches the registered user.</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        # Detailed analysis
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.metric("Risk Score", f"{fraud_analysis['risk_score']:.2f}")
-                        with col2:
-                            st.metric("Confidence", f"{fraud_analysis['confidence']:.2f}")
-                        with col3:
-                            status = "ANOMALY" if is_anomaly else "NORMAL"
-                            st.metric("Pattern Status", status)
-                        
-                        # Risk factors
-                        if fraud_analysis['risk_factors']:
-                            st.markdown("**Risk Factors Detected:**")
-                            for factor in fraud_analysis['risk_factors']:
-                                st.markdown(f"- {factor}")
-                        
-                        # Log session
-                        session_data = {
-                            'user_id': selected_user,
-                            'session_type': 'verification',
-                            'timestamp': datetime.now().isoformat(),
-                            'fraud_detected': fraud_analysis['fraud_detected'],
-                            'risk_score': fraud_analysis['risk_score'],
-                            **features
-                        }
-                        data_agent.save_session_log(session_data)
-                        
-                        st.session_state.verification_active = False
+            # Live metrics display is removed to ensure stability.
+            # Final results are calculated upon completion.
+            
+            # Complete verification
+            if len(typed_text) >= len(verification_text) * 0.9:
+                if st.button("Complete Verification"):
+                    # Run the simulation once, now that typing is complete
+                    start_time_from_session = st.session_state.get('typing_session_start_time')
+                    if start_time_from_session:
+                        # Manually clear events before running simulation
+                        keystroke_agent.key_events = []
+                        keystroke_agent.hold_times = []
+                        keystroke_agent.gap_times = []
+                        keystroke_agent.flight_times = []
+                        keystroke_agent.typed_chars = 0
+
+                        char_time = start_time_from_session
+                        for char in typed_text:
+                            char_time += random.uniform(0.1, 0.3)
+                            keystroke_agent.process_keystroke(char, char_time)
+                            release_time = char_time + random.uniform(0.05, 0.1)
+                            keystroke_agent.process_key_release(char, release_time)
+                    
+                    # Extract features for analysis
+                    features = keystroke_agent.extract_features(typed_text, verification_text)
+
+                    # Predict anomaly
+                    is_anomaly, confidence = behavior_agent.predict_anomaly(selected_user, features)
+                    
+                    # Fraud analysis
+                    fraud_analysis = fraud_agent.analyze_session(
+                        selected_user, features, is_anomaly, confidence
+                    )
+                    
+                    # Display results
+                    st.markdown("### 🔍 Verification Results")
+                    
+                    if fraud_analysis['fraud_detected']:
+                        st.markdown("""
+                        <div class="alert-danger">
+                            <h4>⚠️ FRAUD DETECTED</h4>
+                            <p>The typing pattern does not match the registered user.</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown("""
+                        <div class="alert-success">
+                            <h4>✅ VERIFICATION SUCCESSFUL</h4>
+                            <p>Typing pattern matches the registered user.</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Detailed analysis
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Risk Score", f"{fraud_analysis['risk_score']:.2f}")
+                    with col2:
+                        st.metric("Confidence", f"{fraud_analysis['confidence']:.2f}")
+                    with col3:
+                        status = "ANOMALY" if is_anomaly else "NORMAL"
+                        st.metric("Pattern Status", status)
+                    
+                    # Risk factors
+                    if fraud_analysis['risk_factors']:
+                        st.markdown("**Risk Factors Detected:**")
+                        for factor in fraud_analysis['risk_factors']:
+                            st.markdown(f"- {factor}")
+                    
+                    # Log session
+                    session_data = {
+                        'user_id': selected_user,
+                        'session_type': 'verification',
+                        'timestamp': datetime.now().isoformat(),
+                        'fraud_detected': fraud_analysis['fraud_detected'],
+                        'risk_score': fraud_analysis['risk_score'],
+                        **features
+                    }
+                    data_agent.save_session_log(session_data)
+                    
+                    st.session_state.verification_active = False
 
 def show_admin_dashboard():
     st.markdown("## 📊 Admin Dashboard")
