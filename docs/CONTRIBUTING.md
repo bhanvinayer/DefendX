@@ -1,237 +1,392 @@
-# Contributing to DefendX - Behavior-Based Fraud Detection
+# Contributing to DefendX
 
-## 🚀 Getting Started
+We welcome contributions to the DefendX Multi-Agent Fraud Detection System! This document provides guidelines for contributing to the project.
 
-Thank you for your interest in contributing to the DefendX Behavior-Based Fraud Detection system! This project implements a privacy-first, on-device multi-agent system for detecting fraud through keystroke dynamics and behavioral biometrics.
+## Table of Contents
 
-## 🔧 Development Setup
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Setup](#development-setup)
+- [Contributing Guidelines](#contributing-guidelines)
+- [Pull Request Process](#pull-request-process)
+- [Issue Reporting](#issue-reporting)
+- [Development Standards](#development-standards)
+
+## Code of Conduct
+
+### Our Pledge
+
+We are committed to providing a welcoming and inclusive environment for all contributors, regardless of background, experience level, or identity.
+
+### Standards
+
+**Positive behavior includes:**
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
+
+**Unacceptable behavior includes:**
+- Harassment, trolling, or discriminatory comments
+- Personal attacks or political arguments
+- Publishing private information without permission
+- Any conduct that could be considered inappropriate in a professional setting
+
+## Getting Started
 
 ### Prerequisites
+
+Before contributing, ensure you have:
 - Python 3.8 or higher
-- Git
+- Git installed and configured
+- Familiarity with the project architecture (see `docs/ARCHITECTURE.md`)
+- Understanding of the technology stack (see `docs/TECH_STACK.md`)
 
-### Installation
+### Areas for Contribution
+
+We welcome contributions in these areas:
+
+**🔒 Security & Fraud Detection**
+- Enhanced anomaly detection algorithms
+- New behavioral feature extraction methods
+- Security vulnerability assessments
+- Performance optimization
+
+**🎨 User Interface & Experience**
+- UI/UX improvements
+- Accessibility enhancements
+- New theme options
+- Mobile responsiveness
+
+**📊 Analytics & Visualization**
+- Advanced analytics dashboards
+- New visualization types
+- Real-time monitoring features
+- Reporting capabilities
+
+**🧪 Testing & Quality Assurance**
+- Unit test coverage improvement
+- Integration testing
+- Performance testing
+- Security testing
+
+**📚 Documentation**
+- Code documentation
+- User guides and tutorials
+- API documentation
+- Installation guides
+
+**🚀 Performance & Scalability**
+- Algorithm optimization
+- Memory usage improvements
+- Database integration
+- Multi-user support
+
+## Development Setup
+
+### 1. Fork and Clone
+
 ```bash
-# Clone the repository
-git clone https://github.com/bhanvinayer/DefendX.git
-cd DefendX
+# Fork the repository on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/defendx.git
+cd defendx
 
+# Add upstream remote
+git remote add upstream https://github.com/ORIGINAL_OWNER/defendx.git
+```
+
+### 2. Set Up Development Environment
+
+```bash
 # Create virtual environment
-python -m venv .venv
+python -m venv defendx-dev
+source defendx-dev/bin/activate  # On Windows: defendx-dev\Scripts\activate
 
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
-
-# Install dependencies
+# Install development dependencies
 pip install -r requirements.txt
 
-# Run the application
-streamlit run app.py
+# Verify setup
+streamlit run src/app.py
 ```
 
-## 🏗️ Project Structure
+### 3. Project Structure
+
 ```
 DefendX/
-├── app.py                    # Main Streamlit application
-├── README.md                 # Project documentation
-├── requirements.txt          # Python dependencies
-├── .gitignore               # Git ignore rules
-├── CONTRIBUTING.md          # This file
-├── LICENSE                  # Project license
-├── data/                    # Data storage directory
-│   ├── models/             # Trained ML models
-│   └── sample_data/        # Sample datasets
-├── docs/                   # Additional documentation
-├── tests/                  # Unit tests
-└── assets/                 # Images, diagrams, etc.
+├── src/
+│   └── app.py              # Main application (2743 lines)
+├── docs/
+│   ├── README.md           # Project overview
+│   ├── ARCHITECTURE.md     # System architecture
+│   ├── API.md             # API reference
+│   ├── INSTALLATION.md    # Installation guide
+│   ├── USER_GUIDE.md      # User documentation
+│   ├── TECH_STACK.md      # Technology stack
+│   └── CONTRIBUTING.md    # This file
+├── data/
+│   ├── models/            # ML models
+│   ├── session_log.csv    # Session data
+│   └── sample_data/       # Test data
+├── requirements.txt       # Dependencies
+└── README.md             # Main project README
 ```
 
-## 🤖 Multi-Agent Architecture
+## Contributing Guidelines
 
-### Agents Overview
-1. **KeystrokeAgent**: Captures and analyzes keystroke patterns
-2. **BehaviorModelAgent**: Trains and maintains user behavior models
-3. **FraudDetectionAgent**: Detects anomalies and fraud patterns
-4. **DataManagerAgent**: Handles data persistence and management
+### Branch Naming
 
-## 🔍 Code Style Guidelines
+Use descriptive branch names that follow this pattern:
+- `feature/description` - For new features
+- `bugfix/description` - For bug fixes
+- `security/description` - For security improvements
+- `docs/description` - For documentation updates
+- `refactor/description` - For code refactoring
 
-### Python Code Style
-- Follow PEP 8 guidelines
-- Use type hints where appropriate
-- Add docstrings to all classes and methods
-- Keep functions focused and small
-- Use meaningful variable names
+### Commit Messages
 
-### Example Code Structure
-```python
-class ExampleAgent:
-    """Brief description of the agent's purpose"""
-    
-    def __init__(self):
-        """Initialize agent with required parameters"""
-        pass
-    
-    def process_data(self, data: Dict) -> Dict:
-        """
-        Process input data and return results
-        
-        Args:
-            data: Input data dictionary
-            
-        Returns:
-            Processed results dictionary
-        """
-        pass
+Write clear, descriptive commit messages:
+
 ```
+feat: add real-time anomaly detection alerts
 
-## 🧪 Testing
-
-### Running Tests
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Run specific test file
-python -m pytest tests/test_keystroke_agent.py
-
-# Run with coverage
-python -m pytest tests/ --cov=.
-```
-
-### Writing Tests
-- Write tests for all new functionality
-- Aim for 80%+ code coverage
-- Use descriptive test names
-- Test both success and failure cases
-
-## 📝 Commit Guidelines
-
-### Commit Message Format
-```
-<type>(<scope>): <description>
-
-<body>
-
-<footer>
-```
-
-### Types
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Adding tests
-- `chore`: Maintenance tasks
-
-### Examples
-```
-feat(keystroke): add enhanced timing metrics
-
-Add hold time, gap time, and flight time tracking to improve
-behavioral analysis accuracy.
+- Implement real-time alert system for fraud detection
+- Add notification components to UI
+- Include configurable alert thresholds
+- Update documentation for new feature
 
 Closes #123
 ```
 
-## 🐛 Issue Reporting
+**Commit message format:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `security:` - Security improvements
+
+### Code Style
+
+**Python Code Style:**
+- Follow PEP 8 guidelines
+- Use meaningful variable and function names
+- Include type hints where possible
+- Add docstrings for all public functions and classes
+
+**Example:**
+```python
+def extract_behavioral_features(
+    keystroke_data: List[Dict], 
+    reference_text: str
+) -> Dict[str, float]:
+    """
+    Extract behavioral features from keystroke timing data.
+    
+    Args:
+        keystroke_data: List of keystroke events with timestamps
+        reference_text: The reference text being typed
+        
+    Returns:
+        Dictionary containing extracted behavioral features
+        
+    Raises:
+        ValueError: If keystroke_data is empty or invalid
+    """
+    # Implementation here
+    pass
+```
+
+## Pull Request Process
+
+### 1. Prepare Your Contribution
+
+```bash
+# Sync with upstream
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# Create feature branch
+git checkout -b feature/your-feature-name
+
+# Make your changes
+# ... develop your feature ...
+
+# Test your changes
+streamlit run src/app.py
+
+# Commit your changes
+git add .
+git commit -m "feat: descriptive commit message"
+```
+
+### 2. Submit Pull Request
+
+1. **Push to your fork:**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+2. **Create Pull Request:**
+   - Go to GitHub and create a pull request
+   - Use the pull request template
+   - Provide clear description of changes
+   - Link any related issues
+
+3. **PR Description Template:**
+   ```markdown
+   ## Description
+   Brief description of the changes made.
+   
+   ## Type of Change
+   - [ ] Bug fix
+   - [ ] New feature
+   - [ ] Documentation update
+   - [ ] Security improvement
+   - [ ] Performance optimization
+   
+   ## Testing
+   - [ ] Tested locally
+   - [ ] Added unit tests
+   - [ ] Updated documentation
+   
+   ## Screenshots (if applicable)
+   Add screenshots showing UI changes.
+   
+   ## Related Issues
+   Closes #issue_number
+   ```
+
+## Issue Reporting
 
 ### Bug Reports
-When reporting bugs, please include:
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Environment details (OS, Python version)
-- Screenshots if applicable
+
+Use the bug report template:
+
+```markdown
+**Describe the bug**
+A clear description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '...'
+3. See error
+
+**Expected behavior**
+What you expected to happen.
+
+**Screenshots**
+If applicable, add screenshots.
+
+**Environment:**
+- OS: [e.g., Windows 10, macOS, Ubuntu]
+- Python version: [e.g., 3.9.7]
+- Browser: [e.g., Chrome 96]
+
+**Additional context**
+Any other context about the problem.
+```
 
 ### Feature Requests
-For new features, please provide:
-- Clear description of the feature
-- Use case and motivation
-- Proposed implementation approach
-- Any relevant examples
 
-## 🔒 Security Considerations
+Use the feature request template:
 
-### Privacy Requirements
-- All processing must remain on-device
-- No external API calls without explicit permission
-- User data must be handled securely
-- Follow privacy-by-design principles
+```markdown
+**Is your feature request related to a problem?**
+A clear description of the problem.
 
-### Security Best Practices
-- Validate all input data
-- Use secure coding practices
-- Handle errors gracefully
-- Log security-relevant events
+**Describe the solution you'd like**
+A clear description of what you want to happen.
 
-## 🎯 Pull Request Process
+**Describe alternatives you've considered**
+Alternative solutions or features you've considered.
 
-### Before Submitting
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Update documentation if needed
-7. Commit your changes
-8. Push to your fork
-9. Create a Pull Request
+**Additional context**
+Any other context, mockups, or examples.
+```
 
-### PR Requirements
-- [ ] Code follows style guidelines
-- [ ] Tests are included and passing
-- [ ] Documentation is updated
-- [ ] Commit messages are descriptive
-- [ ] No merge conflicts
+### Security Issues
 
-### Review Process
-1. Automated checks must pass
-2. Code review by maintainers
-3. Address feedback if any
-4. Final approval and merge
+**For security vulnerabilities:**
+- Do NOT create public issues
+- Email security concerns to the maintainers
+- Include detailed description and reproduction steps
+- Allow time for assessment and fix before disclosure
 
-## 📚 Documentation
+## Development Standards
 
-### Adding Documentation
-- Update README.md for major changes
-- Add inline comments for complex logic
-- Include docstrings for all public methods
-- Provide examples for new features
+### Code Quality
 
-### Documentation Style
-- Use clear, concise language
-- Include code examples
-- Add screenshots for UI changes
-- Keep documentation up-to-date
+**Required standards:**
+- All functions must have docstrings
+- Type hints for function parameters and returns
+- Error handling for edge cases
+- Follow existing code patterns and conventions
 
-## 🌟 Recognition
+### Multi-Agent Architecture
 
-Contributors will be recognized in:
-- README.md contributors section
-- Release notes for significant contributions
-- Project acknowledgments
+When contributing to the agent system, maintain:
+- **KeystrokeAgent**: Keystroke capture and analysis
+- **BehaviorModelAgent**: ML model training and prediction
+- **FraudDetectionAgent**: Threat analysis and alerting
+- **DataManagerAgent**: Data persistence and management
 
-## 📞 Getting Help
+### Security Standards
+
+**Security considerations:**
+- No hardcoded credentials or secrets
+- Input validation for all user inputs
+- Secure file handling practices
+- Privacy protection for user data
+- Local processing only (no external APIs)
+
+## Current Architecture
+
+The DefendX system is implemented as a single Streamlit application (`src/app.py`) with:
+- **2743 lines** of integrated code
+- **Four agent classes** for specialized functionality
+- **Theme system** with light/dark modes and accessibility features
+- **Professional UI** with multiple pages and real-time analytics
+- **Local data storage** using CSV and JSON formats
+
+## Getting Help
 
 ### Communication Channels
-- GitHub Issues: For bug reports and feature requests
-- GitHub Discussions: For questions and general discussion
-- Email: Direct contact with maintainers
+
+**For development questions:**
+- Create GitHub discussions for general questions
+- Use issues for specific problems
+- Join community chat (if available)
 
 ### Resources
-- [Project Documentation](README.md)
-- [API Reference](docs/api-reference.md)
-- [Architecture Guide](docs/architecture.md)
 
-## 📄 License
+**Helpful documentation:**
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/API.md` - API reference
+- `docs/TECH_STACK.md` - Technology overview
+- `docs/USER_GUIDE.md` - User documentation
+- `docs/INSTALLATION.md` - Setup instructions
 
-By contributing to DefendX, you agree that your contributions will be licensed under the same license as the project.
+## Recognition
 
----
+### Contributors
 
-Thank you for contributing to DefendX! Together, we're building better security through behavioral biometrics. 🚀
+We recognize contributions in several ways:
+- Contributors list in README
+- Release notes acknowledgment
+- Community highlights
+- Maintainer invitation for significant contributors
+
+### Types of Contributions Valued
+
+- Code contributions (features, fixes, optimizations)
+- Documentation improvements
+- Bug reports and testing
+- Community support and mentoring
+- Design and UX improvements
+- Security audits and improvements
+
+Thank you for contributing to DefendX! Your efforts help make fraud detection more accessible and effective for everyone.
