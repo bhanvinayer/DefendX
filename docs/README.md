@@ -75,7 +75,7 @@ The application will be available at `http://localhost:8501`
 1. **Registration**: Create a new user profile by typing sample text
 2. **Training**: Complete multiple training sessions to build your behavioral profile
 3. **Verification**: Use the system for ongoing authentication and monitoring
-![User Reg](userreg.jpg)
+![User Reg](user.jpg)
 ### For Administrators
 1. **Dashboard**: Access real-time system statistics and user analytics
 2. **Monitoring**: View fraud alerts and system performance metrics
