@@ -53,6 +53,7 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
 - **Model Management**: Automatic model saving/loading for user profiles
 - **Scalable Architecture**: Modular design for easy extension
 - **Cross-platform Compatibility**: Works on Windows, macOS, and Linux
+![Verification_results](verification_results.png)
 ![System Info](systeminfo.jpg)
 ## Quick Start
 
@@ -79,10 +80,12 @@ The application will be available at `http://localhost:8501`
 2. **Training**: Complete multiple training sessions to build your behavioral profile
 3. **Verification**: Use the system for ongoing authentication and monitoring
 ![User Reg](user.jpg)
+![User Verifiction](user_verification.png)
 ### For Administrators
 1. **Dashboard**: Access real-time system statistics and user analytics
 2. **Monitoring**: View fraud alerts and system performance metrics
 3. **User Management**: Review user profiles and session data
+   ![Analytics Dashboard](analytics_dashboard.png)
    ![data](data.png)
 ## Technology Stack
 
@@ -103,7 +106,7 @@ The application will be available at `http://localhost:8501`
 - **CSV Storage**: Session logs and user data
 - **joblib**: Model serialization
 - **JSON**: Configuration and profile storage
-
+![realtimecsv](realtimedata_csv.png)
 ## Documentation Structure
 
 - `README.md` - This overview document
