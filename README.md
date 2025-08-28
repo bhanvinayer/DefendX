@@ -12,7 +12,7 @@ On-Device Multi-Agent System for Behavior-Based Anomaly & Fraud Detection
 - **Source Code** - [app.py](app.py) and supporting files in the SRC Folder 
 - **Models Used** - Isolation Forest (scikit-learn), One-Class SVM (scikit-learn) for behavioral anomaly detection
 - **Models Published** - Local on-device model training with joblib persistence (privacy-preserving)
-- **Datasets Used** - Real-time keystroke dynamics data generated through user interaction (synthetic behavioral data)
+- **Datasets Used** - Real-time keystroke dynamics data generated through user interaction (real-time behavioral data)
 - **Datasets Published** - Privacy-preserving behavioral biometric data generated in real-time
 
 ### Attribution
