@@ -1,4 +1,6 @@
-# DefendX Multi-Agent Fraud Detection System
+# DefendX On-Device AI based Multi-Agent System for Behavior-Based Anomaly & Fraud Detection
+[VISIT DEFENDX](https://defendx.streamlit.app/)
+
 
 ## Overview
 
@@ -26,7 +28,7 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
    - Ensemble anomaly detection using Isolation Forest and One-Class SVM
    - Behavioral feature extraction from keystroke dynamics
    - Real-time threat assessment and scoring
-
+![Features](features.jpg)
 ## Key Features
 
 ### Security Features
@@ -34,19 +36,21 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
 - **Behavioral Biometrics**: Creates unique user profiles based on typing behavior
 - **Real-time Fraud Detection**: Continuous monitoring and instant threat alerts
 - **Ensemble Machine Learning**: Multiple algorithms for improved accuracy
+![Analytics](realtime_analytics.jpg)
 
 ### User Experience
 - **Professional UI**: Modern, responsive design with professional styling
 - **Theme System**: Light/dark mode with accessibility options
 - **Real-time Feedback**: Live metrics and performance indicators
 - **Administrative Tools**: Comprehensive dashboard for system monitoring
+![UI](darkmode.png)
 
 ### Technical Features
 - **Data Persistence**: CSV-based data storage with session logging
 - **Model Management**: Automatic model saving/loading for user profiles
 - **Scalable Architecture**: Modular design for easy extension
 - **Cross-platform Compatibility**: Works on Windows, macOS, and Linux
-
+![System Info](systeminfo.jpg)
 ## Quick Start
 
 ### Prerequisites
@@ -71,7 +75,7 @@ The application will be available at `http://localhost:8501`
 1. **Registration**: Create a new user profile by typing sample text
 2. **Training**: Complete multiple training sessions to build your behavioral profile
 3. **Verification**: Use the system for ongoing authentication and monitoring
-
+![User Reg](userreg.jpg)
 ### For Administrators
 1. **Dashboard**: Access real-time system statistics and user analytics
 2. **Monitoring**: View fraud alerts and system performance metrics
