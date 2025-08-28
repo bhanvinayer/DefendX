@@ -4,7 +4,7 @@
 On-Device Multi-Agent System for Behavior-Based Anomaly & Fraud Detection 
 - **Team name** - Syntax Squad
 - **Team members (Names)** - Bhanvi Nayer (Team Leader), Srijoowin S. , Suhaas
-- **Demo Video Link** - [Coming Soon - Will be uploaded to YouTube]
+- **Demo Video Link** - [YOUTUBE VIDEO- DEFENDX](https://youtu.be/OVJ6atwpmyM)
 - **Deployed URL** - [DEFENDX-On-Device AI based Multi-Agent System for Behavior-Based Anomaly & Fraud Detection ](https://defendx.streamlit.app/))
 
 ### Project Artefacts
