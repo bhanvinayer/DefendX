@@ -37,13 +37,16 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
 - **Real-time Fraud Detection**: Continuous monitoring and instant threat alerts
 - **Ensemble Machine Learning**: Multiple algorithms for improved accuracy
 ![Analytics](realtime_analytics.jpg)
+![system stats](systemstats.jpg)
 
 ### User Experience
 - **Professional UI**: Modern, responsive design with professional styling
 - **Theme System**: Light/dark mode with accessibility options
 - **Real-time Feedback**: Live metrics and performance indicators
 - **Administrative Tools**: Comprehensive dashboard for system monitoring
+![appearance](appearance.jpg)
 ![UI](darkmode.png)
+![Accessibility](accessibility.jpg)
 
 ### Technical Features
 - **Data Persistence**: CSV-based data storage with session logging
@@ -80,7 +83,7 @@ The application will be available at `http://localhost:8501`
 1. **Dashboard**: Access real-time system statistics and user analytics
 2. **Monitoring**: View fraud alerts and system performance metrics
 3. **User Management**: Review user profiles and session data
-
+   ![data](data.jpg)
 ## Technology Stack
 
 ### Core Technologies
