@@ -3,7 +3,7 @@
 ## Overview
 
 DefendX is an advanced multi-agent fraud detection system that analyzes user behavior patterns through keystroke dynamics and behavioral biometrics to identify potential security threats in real-time. The system leverages machine learning algorithms and ensemble anomaly detection to provide robust fraud detection capabilities.
-![Home Page]("home.png")
+![Home Page](docs/home.png)
 
 ## System Architecture
 
