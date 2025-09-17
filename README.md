@@ -4,7 +4,8 @@
 On-Device Multi-Agent System for Behavior-Based Anomaly & Fraud Detection 
 - **Team name** - Syntax Squad
 - **Team members (Names)** - Bhanvi Nayer (Team Leader), Srijoowin S. , Suhaas
-- **Demo Video Link** - [Coming Soon - Will be uploaded to YouTube]
+- **Demo Video Link** - [YOUTUBE VIDEO- DEFENDX](https://youtu.be/OVJ6atwpmyM)
+- **Deployed URL** - [DEFENDX-On-Device AI based Multi-Agent System for Behavior-Based Anomaly & Fraud Detection ](https://defendx.streamlit.app/))
 
 ### Project Artefacts
 
@@ -12,7 +13,7 @@ On-Device Multi-Agent System for Behavior-Based Anomaly & Fraud Detection
 - **Source Code** - [app.py](app.py) and supporting files in the SRC Folder 
 - **Models Used** - Isolation Forest (scikit-learn), One-Class SVM (scikit-learn) for behavioral anomaly detection
 - **Models Published** - Local on-device model training with joblib persistence (privacy-preserving)
-- **Datasets Used** - Real-time keystroke dynamics data generated through user interaction (synthetic behavioral data)
+- **Datasets Used** - Real-time keystroke dynamics data generated through user interaction (real-time behavioral data)
 - **Datasets Published** - Privacy-preserving behavioral biometric data generated in real-time
 
 ### Attribution

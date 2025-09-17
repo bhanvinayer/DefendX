@@ -1,8 +1,11 @@
-# DefendX Multi-Agent Fraud Detection System
+# DefendX On-Device AI based Multi-Agent System for Behavior-Based Anomaly & Fraud Detection
+[VISIT DEFENDX](https://defendx.streamlit.app/)
+
 
 ## Overview
 
 DefendX is an advanced multi-agent fraud detection system that analyzes user behavior patterns through keystroke dynamics and behavioral biometrics to identify potential security threats in real-time. The system leverages machine learning algorithms and ensemble anomaly detection to provide robust fraud detection capabilities.
+![Home Page](home.png)
 
 ## System Architecture
 
@@ -25,7 +28,7 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
    - Ensemble anomaly detection using Isolation Forest and One-Class SVM
    - Behavioral feature extraction from keystroke dynamics
    - Real-time threat assessment and scoring
-
+![Features](features.jpg)
 ## Key Features
 
 ### Security Features
@@ -33,19 +36,25 @@ DefendX is an advanced multi-agent fraud detection system that analyzes user beh
 - **Behavioral Biometrics**: Creates unique user profiles based on typing behavior
 - **Real-time Fraud Detection**: Continuous monitoring and instant threat alerts
 - **Ensemble Machine Learning**: Multiple algorithms for improved accuracy
+![Analytics](realtime_analytics.jpg)
+![system stats](systemstats.png)
 
 ### User Experience
 - **Professional UI**: Modern, responsive design with professional styling
 - **Theme System**: Light/dark mode with accessibility options
 - **Real-time Feedback**: Live metrics and performance indicators
 - **Administrative Tools**: Comprehensive dashboard for system monitoring
+![appearance](appearance.png)
+![UI](darkmode.png)
+![Accessibility](accessibility.png)
 
 ### Technical Features
 - **Data Persistence**: CSV-based data storage with session logging
 - **Model Management**: Automatic model saving/loading for user profiles
 - **Scalable Architecture**: Modular design for easy extension
 - **Cross-platform Compatibility**: Works on Windows, macOS, and Linux
-
+![Verification_results](verification_results.png)
+![System Info](systeminfo.jpg)
 ## Quick Start
 
 ### Prerequisites
@@ -70,12 +79,14 @@ The application will be available at `http://localhost:8501`
 1. **Registration**: Create a new user profile by typing sample text
 2. **Training**: Complete multiple training sessions to build your behavioral profile
 3. **Verification**: Use the system for ongoing authentication and monitoring
-
+![User Reg](user.jpg)
+![User Verifiction](user_verification.png)
 ### For Administrators
 1. **Dashboard**: Access real-time system statistics and user analytics
 2. **Monitoring**: View fraud alerts and system performance metrics
 3. **User Management**: Review user profiles and session data
-
+   ![Analytics Dashboard](analytics_dashboard.png)
+   ![data](data.png)
 ## Technology Stack
 
 ### Core Technologies
@@ -95,7 +106,7 @@ The application will be available at `http://localhost:8501`
 - **CSV Storage**: Session logs and user data
 - **joblib**: Model serialization
 - **JSON**: Configuration and profile storage
-
+![realtimecsv](realtimedata_csv.png)
 ## Documentation Structure
 
 - `README.md` - This overview document

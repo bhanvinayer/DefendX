@@ -26,7 +26,9 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **Pattern Recognition**: Identifies unique typing signatures for each user
 - **Contextual Analysis**: Considers time of day, session length, and environmental factors
 - **Error Pattern Analysis**: Studies correction behaviors and mistake patterns
-
+![user](user.png)
+![verification ](user_verification.png)
+![results](verification_results.png)
 ## 🎨 User Interface & Experience Features
 
 ### Professional Design System
@@ -35,6 +37,7 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **Interactive Dashboards**: Real-time charts and visualizations
 - **Card-based Layout**: Organized information presentation
 - **Professional Color Schemes**: Carefully selected color palettes for different themes
+![home](home.png)
 
 ### Theme System
 - **Light Mode**: Standard bright interface for day use
@@ -42,13 +45,14 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **High Contrast Mode**: Enhanced contrast for better visibility
 - **Custom CSS Generation**: Dynamic styling based on user preferences
 - **Theme Persistence**: Saves user's theme preferences across sessions
-
+![darkmode](darkmode.jpg)
 ### Accessibility Features
 - **Font Size Control**: Four size options (Small, Medium, Large, Extra Large)
 - **Reduced Motion**: Minimizes animations for users with motion sensitivity
 - **Keyboard Navigation**: Full keyboard accessibility support
 - **Screen Reader Compatibility**: ARIA labels and semantic HTML
 - **WCAG 2.1 Compliance**: Follows web accessibility guidelines
+![accessibility](accessibility.png)
 
 ### Multi-page Application
 - **Home Dashboard**: System overview and real-time statistics
@@ -56,7 +60,7 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **Verification Portal**: Daily authentication and monitoring
 - **Admin Dashboard**: System management and user analytics
 - **Settings Panel**: Customization and preference management
-
+![features](features.jpg)
 ## 📊 Analytics & Monitoring Features
 
 ### Real-time Dashboards
@@ -65,7 +69,7 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **Fraud Alerts**: Instant notifications for suspicious activity
 - **User Activity Timeline**: Historical view of user sessions
 - **Interactive Charts**: Plotly-powered visualizations with zoom and filter capabilities
-
+![analytics](analytics_dashboard.png)
 ### Advanced Analytics
 - **Behavioral Trends**: Long-term analysis of typing pattern changes
 - **Risk Scoring**: Comprehensive threat assessment algorithms
@@ -79,7 +83,7 @@ DefendX is a comprehensive multi-agent fraud detection system that combines adva
 - **Performance Reports**: System efficiency and accuracy metrics
 - **User Progress Tracking**: Training completion and improvement monitoring
 - **Security Incident Reports**: Detailed fraud detection event logs
-
+![admin dashboard](admin_dashboard.png)
 ## 🤖 Multi-Agent Architecture Features
 
 ### KeystrokeAgent
