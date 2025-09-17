@@ -134,11 +134,11 @@ class TFLiteModel(private val context: Context) {
             } catch (e: Exception) {
                 e.printStackTrace()
                 // Fallback if model fails
-                return "Suspicious - Slight mismatch in typing (Confidence: N/A)"
+                return "no model loaded"
             }
         }
         // Fallback if no model available
-        return "Suspicious - Slight mismatch in typing (Confidence: N/A)"
+        return "No model Loaded"
     }
 
     private fun calculateReconstructionError(original: FloatArray, reconstructed: FloatArray): Float {
