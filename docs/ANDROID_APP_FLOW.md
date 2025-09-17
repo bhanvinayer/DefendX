@@ -21,8 +21,10 @@
 
 ## TestScreen
 - User types a fixed sentence.
-- Features are extracted (simulated keystroke timings).
-- If TFLite model is present, runs inference; else, uses fallback logic.
+- **Real keystroke events are captured** (press/release times for each key).
+- Features are extracted from actual keystroke timings (dwell time, flight time, etc.).
+- TFLite model runs inference on extracted features
+- Model returns a result (Normal, Suspicious, Critical) with a confidence score.
 - If result is "Suspicious" or "Critical":
   - Prompts user to answer their security question.
   - If correct, shows "Verified"; else, "Locked out".
@@ -39,8 +41,8 @@
 
 ## Data Handling
 - Security answer is stored in SharedPreferences under key `security_answer`.
-
+- Keystroke events are only used for local feature extraction and model inference.
 
 ## Summary
-- All flows and features are based strictly on the code in the `android_app` folder.
+- All flows and features are based strictly on the code in the `android_app` folder, with improved model inference and real keystroke capture.
 
