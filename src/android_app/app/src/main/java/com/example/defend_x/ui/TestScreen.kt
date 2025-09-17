@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.defend_x.utils.TFLiteModel
+import com.example.defend_x.utils.TFLiteModel.KeystrokeEvent
 import com.example.defend_x.utils.NotificationHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -18,8 +20,12 @@ fun TestScreen(navController: NavController, context: Context) {
     var showSecurityQuestion by remember { mutableStateOf(false) }
     var securityAnswer by remember { mutableStateOf("") }
     var finalResult by remember { mutableStateOf("") }
-
     val testSentence = "the quick brown fox jumps over the lazy dog"
+
+    // List to store real keystroke events
+    val keystrokeEvents = remember { mutableStateListOf<KeystrokeEvent>() }
+    // Map to track press times for each key
+    val keyPressTimes = remember { mutableStateMapOf<Char, Long>() }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Behavioral Biometric Authentication") }) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp)) {
@@ -29,12 +35,29 @@ fun TestScreen(navController: NavController, context: Context) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+                    .onKeyEvent { event ->
+                        val keyChar = event.key.nativeKeyCode.toChar()
+                        val now = System.currentTimeMillis()
+                        when (event.type) {
+                            KeyEventType.KeyDown -> {
+                                keyPressTimes[keyChar] = now
+                            }
+                            KeyEventType.KeyUp -> {
+                                val pressTime = keyPressTimes[keyChar] ?: now
+                                keystrokeEvents.add(KeystrokeEvent(keyChar, pressTime, now))
+                                keyPressTimes.remove(keyChar)
+                            }
+                        }
+                        false
+                    }
             )
 
             Button(onClick = {
                 val model = TFLiteModel(context)
-                val pred = model.predict(input, testSentence)
+                val pred = model.predict(input, testSentence, keystrokeEvents.toList())
                 result = pred
 
                 // Check if suspicious or critical - show security question
